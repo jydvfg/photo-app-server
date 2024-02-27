@@ -29,9 +29,14 @@ const userSchema = new Schema(
     isPublic: {
       type: Boolean,
       required: true,
+      default: false,
     },
     about: { type: String, maxlength: 150 },
     savedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Post" }],
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     // this second object adds extra properties: `createdAt` and `updatedAt`
