@@ -78,3 +78,5 @@ router.delete("/posts/:postId", (req, res, next) => {
       res.status(500).send({ error: failed });
     });
 });
+
+module.exports = router;

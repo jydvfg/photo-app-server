@@ -7,7 +7,7 @@ const commentSchema = new Schema({
     maxLength: 100,
   },
   post: { type: mongoose.Schema.Types.ObjectId, ref: "Post" },
-  user: { type: mongoose.Schema.Type.ObjectId, ref: "User" },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 });
 
 const Comment = model("Comment", commentSchema);
