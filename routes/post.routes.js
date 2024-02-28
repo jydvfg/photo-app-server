@@ -34,13 +34,17 @@ router.get("/posts/:postId", (req, res, next) => {
 router.post("/posts", fileUploader.single("imageUrl"), (req, res, next) => {
   const userId = req.payload._id;
 
+
+  console.log("USER ID", userId)
   // Assuming you have middleware that adds location information to the request object
   const { latitude, longitude } = req.location; // Get the latitude and longitude
-
+  console.log("LOCATION", latitude, longitude)
   const timestamp = Date.now();
 
   const { title, description, tags, nsfw } = req.body;
   const imageUrl = req.file.path;
+  
+  console.log("Image url", imageUrl);
 
   Post.create({
     img: imageUrl,
