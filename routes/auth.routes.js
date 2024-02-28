@@ -9,11 +9,9 @@ const saltRounds = 10;
 router.get("/signup", (req, res) => res.send("Route is working !"));
 
 router.post("/signup", (req, res) => {
-  console.log("I am here !");
   const { email, password, name, username, image, isPublic, about, isAdmin } =
     req.body;
 
-  console.log("uSERNAME", username);
   // Check if the email or password or name is provided as an empty string
   if (email === "" || password === "" || name === "") {
     res.status(400).json({ message: "Provide email, password and name" });

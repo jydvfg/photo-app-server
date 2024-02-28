@@ -23,7 +23,7 @@ const indexRoutes = require("./routes/index.routes");
 app.use("/api", indexRoutes);
 
 const userRouter = require("./routes/user.routes");
-app.use("/", userRouter);
+app.use("/", isAuthenticated, userRouter);
 
 const postRouter = require("./routes/post.routes");
 app.use("/", isAuthenticated, postRouter);
