@@ -26,6 +26,10 @@ const userSchema = new Schema(
       required: true,
       maxLength: 10,
     },
+    image: {
+      type: String,
+      default: "https://i.imgur.com/r8bo8u7.png",
+    },
     isPublic: {
       type: Boolean,
       required: true,

@@ -28,26 +28,7 @@ router.get("/users/:userId", (req, res, next) => {
     });
 });
 
-router.post("/users", (req, res, next) => {
-  const { email, password, name, username, isPublic, about, isAdmin } =
-    req.body;
 
-  User.create({
-    email,
-    password,
-    name,
-    username,
-    isPublic,
-    about,
-    isAdmin,
-  })
-    .then((newUser) => {
-      res.status(201).json({ newUser });
-    })
-    .catch((error) => {
-      next(error);
-    });
-});
 
 router.put("/users/:userId", (req, res, next) => {
   const userId = req.params.id;

@@ -6,9 +6,14 @@ const { isAuthenticated } = require("../middleware/jwt.middleware");
 const router = express.Router();
 const saltRounds = 10;
 
-router.post("/signup", (req, res, next) => {
-  const { email, password, name } = req.body;
+router.get("/signup", (req, res) => res.send("Route is working !"));
 
+router.post("/signup", (req, res) => {
+  console.log("I am here !");
+  const { email, password, name, username, image, isPublic, about, isAdmin } =
+    req.body;
+
+  console.log("uSERNAME", username);
   // Check if the email or password or name is provided as an empty string
   if (email === "" || password === "" || name === "") {
     res.status(400).json({ message: "Provide email, password and name" });
@@ -40,17 +45,36 @@ router.post("/signup", (req, res, next) => {
       const salt = bcrypt.genSaltSync(saltRounds);
       const hashedPassword = bcrypt.hashSync(password, salt);
 
-      return User.create({ email, password: hashedPassword, name });
+      return User.create({
+        email,
+        password: hashedPassword,
+        name,
+        username,
+        image,
+        isPublic,
+        about,
+        isAdmin,
+      });
     })
     .then((createdUser) => {
-      const { email, name, _id } = createdUser;
+      const { email, name, _id, username, image, isPublic, about, isAdmin } =
+        createdUser;
 
-      const user = { email, name, _id };
+      const user = {
+        email,
+        name,
+        _id,
+        username,
+        image,
+        isPublic,
+        about,
+        isAdmin,
+      };
 
       res.status(201).json({ user: user });
     })
     .catch((err) => {
-      console.log(err);
+      console.log("Error =", err);
       res.status(500).json({ message: "Internal Server Error" });
     });
 });
@@ -89,7 +113,6 @@ router.post("/login", (req, res, next) => {
     })
     .catch((err) => res.status(500).json({ message: "Internal Server Error" }));
 });
- 
 
 router.get("/verify", isAuthenticated, (req, res, next) => {
   console.log("req.payload", req.payload);

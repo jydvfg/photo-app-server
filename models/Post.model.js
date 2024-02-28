@@ -48,6 +48,10 @@ const postSchema = new Schema({
       message: "Cannot have more than 5 tags",
     },
   },
+  nsfw: {
+    type: Boolean,
+    default: false,
+  },
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
   location: {

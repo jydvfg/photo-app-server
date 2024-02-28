@@ -2,6 +2,7 @@ const router = require("express").Router();
 const User = require("../models/User.model");
 const Post = require("../models/Post.model");
 const Comment = require("../models/Comment.model");
+const fileUploader = require("../config/cloudinary.config");
 
 router.get("/api/posts", (req, res) => {
   res.json(posts);
@@ -30,7 +31,7 @@ router.get("/posts/:postId", (req, res, next) => {
     });
 });
 
-router.post("/posts", (req, res, next) => {
+router.post("/posts", fileUploader.single("imageUrl"), (req, res, next) => {
   const userId = req.payload._id;
 
   // Assuming you have middleware that adds location information to the request object
@@ -38,13 +39,15 @@ router.post("/posts", (req, res, next) => {
 
   const timestamp = Date.now();
 
-  const { img, title, description, tags } = req.body;
+  const { title, description, tags, nsfw } = req.body;
+  const imageUrl = req.file.path;
 
   Post.create({
-    img,
+    img: imageUrl,
     title,
     description,
     tags,
+    nsfw,
     user: userId,
     location: { coordinates: [longitude, latitude] },
     timestamp,
