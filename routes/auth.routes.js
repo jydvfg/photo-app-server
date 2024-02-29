@@ -12,7 +12,6 @@ router.post("/signup", (req, res) => {
   const { email, password, name, username, image, isPublic, about, isAdmin } =
     req.body;
 
-  // Check if the email or password or name is provided as an empty string
   if (email === "" || password === "" || name === "") {
     res.status(400).json({ message: "Provide email, password and name" });
     return;
@@ -113,8 +112,15 @@ router.post("/login", (req, res, next) => {
 });
 
 router.get("/verify", isAuthenticated, (req, res, next) => {
-  console.log("req.payload", req.payload);
-  res.status(200).json(req.payload);
+  User.findById(req.payload._id)
+    .then((user) => {
+      if (user) {
+        res.status(200).json(req.payload);
+      }
+    })
+    .catch((error) => {
+      console.log("Error =>", error);
+    });
 });
 
 module.exports = router;

@@ -2,10 +2,11 @@ const router = require("express").Router();
 const User = require("../models/User.model");
 const Post = require("../models/Post.model");
 const Comment = require("../models/Comment.model");
-const fileUploader = require("../config/cloudinary.config");
-
+const cloudinary = require("../utils/cloudinary");
 router.get("/api/posts", (req, res) => {
-  res.json(posts);
+  const posts = Post.find().then((posts) => {
+    res.json(posts);
+  });
 });
 
 router.get("/posts/users/:userId", (req, res, next) => {
@@ -31,37 +32,57 @@ router.get("/posts/:postId", (req, res, next) => {
     });
 });
 
-router.post("/posts", fileUploader.single("imageUrl"), (req, res, next) => {
+router.post("/posts", (req, res, next) => {
   const userId = req.payload._id;
-
-
-  console.log("USER ID", userId)
-  // Assuming you have middleware that adds location information to the request object
-  const { latitude, longitude } = req.location; // Get the latitude and longitude
-  console.log("LOCATION", latitude, longitude)
+  const { latitude, longitude } = req.body;
   const timestamp = Date.now();
-
   const { title, description, tags, nsfw } = req.body;
-  const imageUrl = req.file.path;
-  
-  console.log("Image url", imageUrl);
 
-  Post.create({
-    img: imageUrl,
+  const { postImage } = req.body;
+  console.log(
+    "I am here and working !!!",
+    userId,
+    latitude,
+    longitude,
     title,
     description,
     tags,
-    nsfw,
-    user: userId,
-    location: { coordinates: [longitude, latitude] },
-    timestamp,
-  })
-    .then((newPost) => {
-      res.status(201).json({ newPost });
-    })
-    .catch((error) => {
-      next(error);
-    });
+    nsfw
+  );
+  console.log("Profile image current received from req.body =>", postImage);
+
+  if (postImage) {
+    cloudinary.uploader
+      .upload(postImage, {
+        folder: "user-posts",
+        allowed_formats: ["jpg", "png", "jpeg"],
+        width: 1000,
+      })
+      .then((imageInfo) => {
+        Post.create({
+          imageUrl: imageInfo.url,
+          title,
+          description,
+          tags,
+          nsfw,
+          user: userId,
+          location: { coordinates: [latitude, longitude] },
+          timestamp,
+        })
+          .then((newPost) => {
+            res.status(200).json({ newPost });
+          })
+          .catch((error) => {
+            next(error);
+          });
+      })
+      .catch(() => {
+        res.status(500).json({
+          errorMesage:
+            "Error occured while you are trying to upload image to cloudinary!",
+        });
+      });
+  }
 });
 
 router.put("/posts/:postId", (req, res, next) => {

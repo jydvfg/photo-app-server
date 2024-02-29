@@ -1,7 +1,7 @@
 const { Schema, model, default: mongoose } = require("mongoose");
 
 const postSchema = new Schema({
-  img: String, //URL
+  imageUrl: { type: String, default: "..@imageUrl" },
   title: { type: String, maxLength: 20 },
   description: { type: String, maxLength: 100 },
   tags: {

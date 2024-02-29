@@ -18,20 +18,32 @@ router.get("/users", (req, res, next) => {
 });
 
 router.get("/users/:userId", (req, res, next) => {
-  const userId = req.params.id;
-  User.findById(userId)
-    .then((user) => {
-      res.status(200).json(user);
-    })
-    .catch((error) => {
-      next(error);
-    });
+  const userId = req.params.userId;
+  const loggedInUserId = req.payload._id;
+  if (userId === loggedInUserId) {
+    User.findById(loggedInUserId)
+      .then((user) => {
+        res.status(200).json(user);
+      })
+      .catch((error) => {
+        next(error);
+      });
+  } else {
+    User.findById(userId)
+      .then((user) => {
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+        res.status(200).json(user);
+      })
+      .catch((error) => {
+        next(error);
+      });
+  }
 });
 
-
-
 router.put("/users/:userId", (req, res, next) => {
-  const userId = req.params.id;
+  const userId = req.payload._id;
   User.findByIdAndUpdate(userId, req.body, { new: true })
     .then((updatedUser) => {
       res.status(200).json(updatedUser);
@@ -42,7 +54,7 @@ router.put("/users/:userId", (req, res, next) => {
 });
 
 router.delete("/users/:userId", (req, res) => {
-  const userId = req.params.id;
+  const userId = req.payload._id;
   User.findByIdAndDelete(userId)
     .then((result) => {
       res.status(204).send();
