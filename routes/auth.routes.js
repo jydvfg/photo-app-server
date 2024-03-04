@@ -76,6 +76,45 @@ router.post("/signup", (req, res) => {
     });
 });
 
+router.put("/users/:username/password", isAuthenticated, async (req, res) => {
+  try {
+    const { username } = req.params;
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const passwordCorrect = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+    if (!passwordCorrect) {
+      return res.status(401).json({ message: "Incorrect current password" });
+    }
+
+    const passwordRegex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        message:
+          "Password must have at least 6 characters and contain at least one number, one lowercase, and one uppercase letter.",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 router.post("/login", (req, res, next) => {
   const { email, password } = req.body;
 
@@ -94,9 +133,9 @@ router.post("/login", (req, res, next) => {
       const passwordCorrect = bcrypt.compareSync(password, foundUser.password);
 
       if (passwordCorrect) {
-        const { _id, email, name } = foundUser;
+        const { _id, email, name, username } = foundUser;
 
-        const payload = { _id, email, name };
+        const payload = { _id, email, name, username };
 
         const authToken = jwt.sign(payload, process.env.TOKEN_SECRET, {
           algorithm: "HS256",

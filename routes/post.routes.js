@@ -21,13 +21,17 @@ router.get("/posts/users/:userId", (req, res, next) => {
 });
 
 router.get("/posts/:postId", (req, res, next) => {
-  const postId = req.params.id;
+  const postId = req.params.postId;
   Post.findById(postId)
+    .populate("user")
     .populate("comments")
     .then((post) => {
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
       res.status(200).json(post);
     })
-    .next((error) => {
+    .catch((error) => {
       next(error);
     });
 });

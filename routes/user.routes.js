@@ -17,35 +17,44 @@ router.get("/users", (req, res, next) => {
     });
 });
 
-router.get("/users/:userId", (req, res, next) => {
-  const userId = req.params.userId;
+router.get("/users/:username", (req, res, next) => {
+  const username = req.params.username;
   const loggedInUserId = req.payload._id;
-  if (userId === loggedInUserId) {
-    User.findById(loggedInUserId)
-      .then((user) => {
+
+  User.findOne({ username })
+    .then((user) => {
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      if (user._id.toString() === loggedInUserId) {
         res.status(200).json(user);
-      })
-      .catch((error) => {
-        next(error);
-      });
-  } else {
-    User.findById(userId)
-      .then((user) => {
-        if (!user) {
-          return res.status(404).json({ error: "User not found" });
-        }
-        res.status(200).json(user);
-      })
-      .catch((error) => {
-        next(error);
-      });
-  }
+      } else {
+        res.status(200).json({
+          _id: user._id,
+          name: user.name,
+          image: user.image,
+          isPublic: user.isPublic,
+        });
+      }
+    })
+    .catch((error) => {
+      next(error);
+    });
 });
 
 router.put("/users/:userId", (req, res, next) => {
-  const userId = req.payload._id;
-  User.findByIdAndUpdate(userId, req.body, { new: true })
+  const userId = req.params.userId;
+  const postId = req.body.postId;
+
+  User.findByIdAndUpdate(
+    userId,
+    { $push: { savedPosts: postId } },
+    { new: true }
+  )
     .then((updatedUser) => {
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
       res.status(200).json(updatedUser);
     })
     .catch((error) => {

@@ -28,7 +28,7 @@ const userSchema = new Schema(
     },
     image: {
       type: String,
-      default: "https://i.imgur.com/r8bo8u7.png",
+      default: "https://i.imgur.com/GvsgVco.jpeg",
     },
     isPublic: {
       type: Boolean,
