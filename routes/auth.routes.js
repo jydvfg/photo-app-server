@@ -3,17 +3,18 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
+const cloudinary = require("../utils/cloudinary");
 const router = express.Router();
 const saltRounds = 10;
 
 router.get("/signup", (req, res) => res.send("Route is working !"));
 
-router.post("/signup", (req, res) => {
+router.post("/signup", async (req, res) => {
   const { email, password, name, username, image, isPublic, about, isAdmin } =
     req.body;
 
   if (email === "" || password === "" || name === "") {
-    res.status(400).json({ message: "Provide email, password and name" });
+    res.status(400).json({ message: "Provide email, password, and name" });
     return;
   }
 
@@ -32,8 +33,17 @@ router.post("/signup", (req, res) => {
     return;
   }
 
-  User.findOne({ email })
-    .then((foundUser) => {
+  try {
+    if (image) {
+      const imageInfo = await cloudinary.uploader.upload(image, {
+        folder: "user-profile",
+        allowed_formats: ["jpg", "png", "jpeg"],
+        height: 300,
+      });
+
+      const imageUrl = imageInfo.secure_url;
+
+      const foundUser = await User.findOne({ email });
       if (foundUser) {
         res.status(400).json({ message: "User already exists." });
         return;
@@ -42,38 +52,38 @@ router.post("/signup", (req, res) => {
       const salt = bcrypt.genSaltSync(saltRounds);
       const hashedPassword = bcrypt.hashSync(password, salt);
 
-      return User.create({
+      const createdUser = await User.create({
         email,
         password: hashedPassword,
         name,
         username,
-        image,
+        image: imageUrl,
         isPublic,
         about,
         isAdmin,
       });
-    })
-    .then((createdUser) => {
-      const { email, name, _id, username, image, isPublic, about, isAdmin } =
-        createdUser;
+
+      const { _id } = createdUser;
 
       const user = {
         email,
         name,
         _id,
         username,
-        image,
+        image: imageUrl,
         isPublic,
         about,
         isAdmin,
       };
 
-      res.status(201).json({ user: user });
-    })
-    .catch((err) => {
-      console.log("Error =", err);
-      res.status(500).json({ message: "Internal Server Error" });
-    });
+      res.status(201).json({ user });
+    } else {
+      res.status(400).json({ message: "Provide an image" });
+    }
+  } catch (err) {
+    console.log("Error =", err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 });
 
 router.put("/users/:username/password", isAuthenticated, async (req, res) => {

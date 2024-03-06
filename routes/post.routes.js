@@ -3,6 +3,7 @@ const User = require("../models/User.model");
 const Post = require("../models/Post.model");
 const Comment = require("../models/Comment.model");
 const cloudinary = require("../utils/cloudinary");
+
 router.get("/api/posts", (req, res) => {
   const posts = Post.find().then((posts) => {
     res.json(posts);
@@ -36,56 +37,57 @@ router.get("/posts/:postId", (req, res, next) => {
     });
 });
 
-router.post("/posts", (req, res, next) => {
+router.post("/posts", async (req, res, next) => {
   const userId = req.payload._id;
-  const { latitude, longitude } = req.body;
+  const { latitude, longitude, title, description, tags, nsfw, postImage } =
+    req.body;
   const timestamp = Date.now();
-  const { title, description, tags, nsfw } = req.body;
 
-  const { postImage } = req.body;
-  console.log(
-    "I am here and working !!!",
-    userId,
-    latitude,
-    longitude,
-    title,
-    description,
-    tags,
-    nsfw
-  );
-  console.log("Profile image current received from req.body =>", postImage);
+  try {
+    const latestPost = await Post.findOne({ user: userId }).sort({
+      timestamp: -1,
+    });
 
-  if (postImage) {
-    cloudinary.uploader
-      .upload(postImage, {
+    if (latestPost) {
+      const latestPostTimestamp = new Date(latestPost.timestamp);
+      const nextDay = new Date(latestPostTimestamp);
+      nextDay.setDate(nextDay.getDate() + 1);
+      nextDay.setHours(12, 0, 0, 0);
+
+      if (timestamp < nextDay.getTime()) {
+        const deletedPost = await Post.findByIdAndDelete(latestPost._id);
+        if (deletedPost) {
+          console.log("Previous post deleted successfully");
+        } else {
+          console.log("Failed to delete previous post");
+        }
+      }
+    }
+
+    if (postImage) {
+      const imageInfo = await cloudinary.uploader.upload(postImage, {
         folder: "user-posts",
         allowed_formats: ["jpg", "png", "jpeg"],
         width: 1000,
-      })
-      .then((imageInfo) => {
-        Post.create({
-          imageUrl: imageInfo.url,
-          title,
-          description,
-          tags,
-          nsfw,
-          user: userId,
-          location: { coordinates: [latitude, longitude] },
-          timestamp,
-        })
-          .then((newPost) => {
-            res.status(200).json({ newPost });
-          })
-          .catch((error) => {
-            next(error);
-          });
-      })
-      .catch(() => {
-        res.status(500).json({
-          errorMesage:
-            "Error occured while you are trying to upload image to cloudinary!",
-        });
       });
+
+      const newPost = await Post.create({
+        imageUrl: imageInfo.url,
+        title,
+        description,
+        tags,
+        nsfw,
+        user: userId,
+        location: { coordinates: [latitude, longitude] },
+        timestamp,
+      });
+
+      return res.status(200).json({ newPost });
+    } else {
+      return res.status(400).json({ message: "Post image is required." });
+    }
+  } catch (error) {
+    next(error);
   }
 });
 
