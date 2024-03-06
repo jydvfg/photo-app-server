@@ -24,7 +24,7 @@ router.get("/posts/:postId", (req, res, next) => {
   const postId = req.params.postId;
   Post.findById(postId)
     .populate("user")
-    .populate("comments")
+    .populate({ path: "comments", populate: { path: "user" } })
     .then((post) => {
       if (!post) {
         return res.status(404).json({ message: "Post not found" });

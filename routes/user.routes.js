@@ -22,6 +22,7 @@ router.get("/users/:username", (req, res, next) => {
   const loggedInUserId = req.payload._id;
 
   User.findOne({ username })
+    .populate("savedPosts")
     .then((user) => {
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -33,7 +34,10 @@ router.get("/users/:username", (req, res, next) => {
           _id: user._id,
           name: user.name,
           image: user.image,
+          about: user.about,
+          email: user.email,
           isPublic: user.isPublic,
+          savedPosts: user.savedPosts,
         });
       }
     })
